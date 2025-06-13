@@ -1,6 +1,3 @@
-from commands import ChangeDirectory
-
-
 class CommandRegistry:
     def __init__(self):
         self.commands = {}
@@ -10,7 +7,3 @@ class CommandRegistry:
 
     def get(self, cname):
         return self.commands.get(cname)
-
-
-commmand_registry = CommandRegistry()
-commmand_registry.add(ChangeDirectory())

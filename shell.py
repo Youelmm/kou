@@ -1,28 +1,44 @@
 import os
 
-from command_registry import commmand_registry
+from command_registry import CommandRegistry
+from parser import Parser
 
 
 class Shell:
-    def __init__(self, name, prompt=None):
+    def __init__(self, name, prompt=None, commands=CommandRegistry()):
         self.name = name
-        if prompt is None:
-            self._prompt = f"{self.name} {os.getcwd()} > "
-        else:
-            self._prompt = prompt
+        self.running = True
+        self.env = {}
+        self.commands = commands
+        self.parser = Parser()
 
-    @property
-    def prompt(self):
-        return f"{self.name} {os.getcwd()} > "
+        if prompt is None:
+            self.env["prompt"] = lambda: f"{self.name} {os.getcwd()}\n> "
+        else:
+            self.env["prompt"] = prompt
+
+    def add_command(self, c):
+        self.commands.add(c)
 
     def run(self):
-        while True:
-            entry = input(self.prompt).strip().split()
-            command_name, args = entry[0], entry[1:]
-            command = commmand_registry.get(command_name)
-            if command is not None:
-                command.execute(*args)
+        while self.running:
+            # Refresh prompt
+            prompt = self.env["prompt"]()
 
+            # Get cleaned user entry
+            entry = input(prompt)
 
-shell = Shell("zen")
-shell.run()
+            # Parse line
+            cmd_name, args = self.parser.parse(entry)
+
+            # Get command
+            cmd = self.commands.get(cmd_name)
+
+            # Execute command if exists
+            if cmd is not None:
+                cmd.execute(*args)
+            else:
+                print(f"Error: command {cmd_name} does not exist.")
+
+    def stop(self):
+        self.running = False
